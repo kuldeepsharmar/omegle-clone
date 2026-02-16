@@ -3,30 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NextChat - Premium Video</title>
+    <title>NextChat Premium</title>
     <link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>NextChat</h1>
-            <div class="status" id="status-text">Click Start to find people</div>
-        </header>
-        
-        <div class="video-grid">
-            <div class="video-wrapper local">
+
+    <div class="main-wrapper">
+        <div class="video-column">
+            <div class="video-container" id="remote-container">
+                <video id="remote-video" autoplay playsinline></video>
+                <span class="label">Stranger</span>
+                <div class="loading-overlay" id="loading-overlay">Waiting for connection...</div>
+            </div>
+            <div class="video-container local-container">
                 <video id="local-video" autoplay playsinline muted></video>
                 <span class="label">You</span>
             </div>
-            <div class="video-wrapper remote">
-                <video id="remote-video" autoplay playsinline></video>
-                <span class="label">Stranger</span>
+            
+            <div class="controls">
+                <button id="next-btn">Start Chat</button>
             </div>
         </div>
 
-        <div class="controls">
-            <button id="next-btn">Start Chat</button>
+        <div class="chat-column">
+            <header>
+                <h2>NextChat</h2>
+                <div id="status-text">Click Start to connect</div>
+            </header>
+            
+            <div class="chat-box" id="chat-box">
+                <div class="system-msg">Welcome to NextChat!</div>
+            </div>
+            
+            <div class="chat-input-area">
+                <input type="text" id="msg-input" placeholder="Type a message..." disabled>
+                <button id="send-btn" disabled>Send</button>
+            </div>
         </div>
     </div>
 

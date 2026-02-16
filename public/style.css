@@ -1,74 +1,126 @@
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
 
 body {
-    background: #0f0c29;
-    background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+    background: #1a1a2e;
     color: white;
     height: 100vh;
+    overflow: hidden; /* Prevent full page scroll */
+}
+
+/* MAIN LAYOUT: Split Screen for Desktop */
+.main-wrapper {
     display: flex;
+    height: 100%;
+    width: 100%;
+}
+
+/* --- VIDEO COLUMN (Left) --- */
+.video-column {
+    flex: 2; /* Takes 2/3 of screen on desktop */
+    background: #000;
+    display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-}
-
-.container {
-    width: 90%;
-    max-width: 1200px;
-    text-align: center;
-}
-
-header h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-    background: -webkit-linear-gradient(#eee, #333);
-    -webkit-background-clip: text;
-}
-
-.status { color: #aaa; margin-bottom: 20px; font-size: 1.1rem; }
-
-.video-grid {
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 30px;
-}
-
-.video-wrapper {
     position: relative;
-    width: 45%;
-    min-width: 300px;
-    aspect-ratio: 16/9;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 20px;
+    gap: 10px;
+    padding: 10px;
+}
+
+.video-container {
+    width: 100%;
+    height: 45%; /* Both videos stack */
+    position: relative;
+    background: #111;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    border: 1px solid #333;
 }
 
 video { width: 100%; height: 100%; object-fit: cover; }
 
 .label {
     position: absolute;
-    bottom: 10px;
-    left: 15px;
+    bottom: 10px; left: 15px;
     background: rgba(0,0,0,0.6);
-    padding: 5px 10px;
-    border-radius: 8px;
-    font-size: 0.9rem;
+    padding: 4px 10px; border-radius: 5px; font-size: 0.8rem;
+    z-index: 2;
 }
 
-#find-btn {
-    padding: 15px 40px;
-    font-size: 1.2rem;
-    border: none;
-    border-radius: 50px;
-    background: linear-gradient(90deg, #ff8a00, #e52e71);
-    color: white;
-    cursor: pointer;
-    transition: transform 0.2s;
-    box-shadow: 0 5px 15px rgba(229, 46, 113, 0.4);
+.loading-overlay {
+    position: absolute; top:0; left:0; width:100%; height:100%;
+    display: flex; justify-content: center; align-items: center;
+    background: #1a1a2e; color: #888; z-index: 1;
 }
 
-#find-btn:hover { transform: scale(1.05); }
-#find-btn:active { transform: scale(0.95); }
+/* --- CONTROLS --- */
+.controls {
+    height: 10%;
+    display: flex; align-items: center;
+}
+
+#next-btn {
+    padding: 12px 40px; font-size: 1.1rem; border: none; border-radius: 8px;
+    background: white; color: black; font-weight: bold; cursor: pointer;
+    box-shadow: 0 0 15px rgba(255,255,255,0.2);
+}
+#next-btn:hover { background: #eee; }
+
+/* --- CHAT COLUMN (Right) --- */
+.chat-column {
+    flex: 1; /* Takes 1/3 of screen */
+    background: #16213e;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #333;
+}
+
+.chat-column header {
+    padding: 15px; background: #0f3460;
+    text-align: center; border-bottom: 1px solid #333;
+}
+
+.chat-box {
+    flex: 1; overflow-y: auto; padding: 15px;
+    display: flex; flex-direction: column; gap: 10px;
+}
+
+.message { padding: 8px 12px; border-radius: 8px; max-width: 85%; font-size: 0.95rem; }
+.my-msg { background: #e94560; align-self: flex-end; color: white; }
+.stranger-msg { background: #fff; align-self: flex-start; color: black; }
+.system-msg { color: #888; font-size: 0.8rem; text-align: center; margin: 5px 0; }
+
+.chat-input-area {
+    padding: 15px; background: #0f3460; display: flex; gap: 10px;
+}
+input {
+    flex: 1; padding: 10px; border-radius: 5px; border: none; outline: none;
+}
+#send-btn {
+    padding: 10px 20px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer;
+}
+
+/* --- MOBILE LAYOUT --- */
+@media (max-width: 768px) {
+    .main-wrapper { flex-direction: column; }
+    
+    .video-column {
+        flex: 1.5; /* Videos take top 60% of phone screen */
+        padding: 5px;
+        gap: 5px;
+    }
+    
+    .video-container { height: 50%; border-radius: 0; }
+    
+    .controls { position: absolute; bottom: 20px; z-index: 10; width: 100%; justify-content: center; }
+    #next-btn { padding: 10px 25px; font-size: 1rem; opacity: 0.9; }
+
+    .chat-column {
+        flex: 1; /* Chat takes bottom 40% */
+        border-top: 2px solid #333;
+        border-left: none;
+    }
+    
+    header { display: none; } /* Hide header on mobile to save space */
+    .chat-box { padding: 10px; font-size: 0.9rem; }
+}

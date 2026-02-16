@@ -3,55 +3,60 @@ const localVideo = document.getElementById('local-video');
 const remoteVideo = document.getElementById('remote-video');
 const nextBtn = document.getElementById('next-btn');
 const statusText = document.getElementById('status-text');
+const loadingOverlay = document.getElementById('loading-overlay');
+
+// Chat Elements
+const chatBox = document.getElementById('chat-box');
+const msgInput = document.getElementById('msg-input');
+const sendBtn = document.getElementById('send-btn');
 
 let localStream;
 let peerConnection;
 let partnerId = null;
-let isSearching = false;
 
-// STUN servers
 const servers = {
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
 
-// 1. Initialize Camera
+// 1. Camera Init
 async function init() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localVideo.srcObject = localStream;
     } catch (err) {
-        console.error("Error accessing media devices.", err);
-        statusText.innerText = "Please allow camera access.";
+        console.error(err);
+        statusText.innerText = "Allow camera to start";
     }
 }
 init();
 
-// 2. Button Logic (Start / Skip / Stop)
+// 2. Buttons
 nextBtn.addEventListener('click', () => {
-    if (nextBtn.innerText === "Start Chat" || nextBtn.innerText === "Find New Stranger") {
+    const action = nextBtn.innerText;
+    
+    if (action === "Start Chat" || action === "Find New Stranger") {
         startSearch();
-    } else if (nextBtn.innerText === "Skip") {
-        // Close current connection and search again immediately
+    } else if (action === "Skip") {
         resetConnection();
         startSearch();
-    } else if (nextBtn.innerText === "Stop") {
-        // Stop searching
+    } else if (action === "Stop") {
         stopSearch();
     }
 });
 
 function startSearch() {
-    isSearching = true;
-    nextBtn.innerText = "Stop"; // Allow user to cancel search
-    statusText.innerText = "Looking for someone...";
+    nextBtn.innerText = "Stop";
+    statusText.innerText = "Searching...";
+    loadingOverlay.innerText = "Looking for someone...";
+    loadingOverlay.style.display = "flex";
     socket.emit('find-partner');
 }
 
 function stopSearch() {
-    isSearching = false;
-    socket.emit('stop-search'); // Tell server to remove us from queue
+    socket.emit('stop-search');
     nextBtn.innerText = "Start Chat";
-    statusText.innerText = "Search stopped.";
+    statusText.innerText = "Stopped";
+    loadingOverlay.innerText = "Click Start";
 }
 
 function resetConnection() {
@@ -60,22 +65,84 @@ function resetConnection() {
         peerConnection = null;
     }
     partnerId = null;
-    remoteVideo.srcObject = null; // Black out the screen
+    remoteVideo.srcObject = null;
+    loadingOverlay.style.display = "flex";
+    loadingOverlay.innerText = "Disconnected";
+    
+    // Disable Chat
+    toggleChat(false);
+    addSystemMessage("You disconnected.");
 }
 
 // 3. Socket Events
 socket.on('match-found', (id) => {
     partnerId = id;
-    statusText.innerText = "Stranger found!";
-    nextBtn.innerText = "Skip"; // Change button to Skip
+    statusText.innerText = "Connected to Stranger";
+    nextBtn.innerText = "Skip";
+    loadingOverlay.style.display = "none";
+    
+    // Enable Chat & Clear old messages
+    chatBox.innerHTML = ''; 
+    addSystemMessage("You are now chatting with a random stranger. Say Hi!");
+    toggleChat(true);
+
     createPeerConnection();
 });
 
 socket.on('partner-disconnected', () => {
-    statusText.innerText = "Stranger disconnected.";
+    statusText.innerText = "Stranger left";
+    loadingOverlay.style.display = "flex";
+    loadingOverlay.innerText = "Stranger disconnected";
     resetConnection();
-    nextBtn.innerText = "Find New Stranger"; // Prompt to search again
+    nextBtn.innerText = "Find New Stranger";
 });
+
+// --- CHAT LOGIC ---
+
+function toggleChat(enable) {
+    msgInput.disabled = !enable;
+    sendBtn.disabled = !enable;
+    if (enable) msgInput.focus();
+}
+
+// Send Message
+sendBtn.addEventListener('click', sendMessage);
+msgInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendMessage();
+});
+
+function sendMessage() {
+    const text = msgInput.value.trim();
+    if (text && partnerId) {
+        // Show my message
+        addMessage(text, 'my-msg');
+        // Send to server
+        socket.emit('send-message', text);
+        msgInput.value = '';
+    }
+}
+
+// Receive Message
+socket.on('receive-message', (msg) => {
+    addMessage(msg, 'stranger-msg');
+});
+
+function addMessage(text, type) {
+    const div = document.createElement('div');
+    div.classList.add('message', type);
+    div.innerText = text;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight; // Auto scroll down
+}
+
+function addSystemMessage(text) {
+    const div = document.createElement('div');
+    div.classList.add('system-msg');
+    div.innerText = text;
+    chatBox.appendChild(div);
+}
+
+// --- WEBRTC LOGIC ---
 
 socket.on('role', async (role) => {
     if (role === 'caller') {
@@ -87,7 +154,7 @@ socket.on('role', async (role) => {
 
 socket.on('signal', async (data) => {
     const signal = data.signal;
-    if (!peerConnection) return; // Ignore signals if we reset
+    if (!peerConnection) return;
 
     if (signal.type === 'offer') {
         if (!peerConnection) createPeerConnection();
@@ -95,21 +162,17 @@ socket.on('signal', async (data) => {
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
         socket.emit('signal', { target: data.sender, signal: { type: 'answer', sdp: answer } });
-    } 
-    else if (signal.type === 'answer') {
+    } else if (signal.type === 'answer') {
         await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp));
-    } 
-    else if (signal.candidate) {
+    } else if (signal.candidate) {
         await peerConnection.addIceCandidate(new RTCIceCandidate(signal.candidate));
     }
 });
 
-// 4. WebRTC Helper
 function createPeerConnection() {
-    if (peerConnection) return; // Prevent duplicates
-
+    if (peerConnection) return;
     peerConnection = new RTCPeerConnection(servers);
-
+    
     if (localStream) {
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
     }
@@ -124,7 +187,6 @@ function createPeerConnection() {
         }
     };
     
-    // Handle connection state changes
     peerConnection.onconnectionstatechange = () => {
         if (peerConnection.connectionState === 'disconnected') {
             resetConnection();
