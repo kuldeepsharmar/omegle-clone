@@ -19,27 +19,31 @@ body {
     display: flex;
     height: 100%;
     width: 100%;
-    /* On mobile, we subtract the ad height from the main layout */
+    /* This forces the content to stay centered even if sidebars are hidden */
+    justify-content: center; 
 }
 
-/* 1. SIDEBAR ADS (Flex to fill empty space on sides) */
-.ad-sidebar {
-    flex: 1; /* Takes all remaining space */
+/* 1. SIDE SPACERS (Formerly Ad Sidebar) */
+/* We renamed this to avoid AdBlockers deleting the layout structure */
+.side-spacer {
+    flex: 1; /* Fills remaining space */
     background: #0f0f0f;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 10px;
+    min-width: 150px; /* Prevents collapse */
+}
+
+.left-spacer {
     border-right: 1px solid #222;
 }
 
-/* Specific styling for right sidebar to have a left border */
-.right-ad {
-    border-right: none;
+.right-spacer {
     border-left: 1px solid #222;
 }
 
-.ad-box {
+.ad-container {
     width: 160px;
     height: 600px; /* Standard Skyscraper Ad size */
     background: #1a1a1a;
@@ -53,10 +57,13 @@ body {
 
 /* 2. CENTER STAGE (Fixed width to keep videos looking good) */
 .center-stage {
-    width: 900px; /* Restrict width so it doesn't stretch too wide */
-    max-width: 100%;
+    width: 900px; 
+    /* Important: prevents it from shrinking if window gets small */
+    flex-shrink: 0; 
     display: flex;
     background: #000;
+    border-left: 1px solid #222;
+    border-right: 1px solid #222;
 }
 
 /* Video Column */
@@ -249,7 +256,7 @@ button {
 
 @media (max-width: 768px) {
     /* Hide Desktop Sidebars & Chat Column */
-    .ad-sidebar,
+    .side-spacer,
     .desktop-chat {
         display: none;
     }
