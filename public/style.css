@@ -19,33 +19,26 @@ body {
     display: flex;
     height: 100%;
     width: 100%;
-    /* This forces the content to stay centered even if sidebars are hidden */
     justify-content: center; 
 }
 
-/* 1. SIDE SPACERS (Formerly Ad Sidebar) */
-/* We renamed this to avoid AdBlockers deleting the layout structure */
+/* 1. SIDE SPACERS */
 .side-spacer {
-    flex: 1; /* Fills remaining space */
+    flex: 1; 
     background: #0f0f0f;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 10px;
-    min-width: 150px; /* Prevents collapse */
+    min-width: 150px; 
 }
 
-.left-spacer {
-    border-right: 1px solid #222;
-}
-
-.right-spacer {
-    border-left: 1px solid #222;
-}
+.left-spacer { border-right: 1px solid #222; }
+.right-spacer { border-left: 1px solid #222; }
 
 .ad-container {
     width: 160px;
-    height: 600px; /* Standard Skyscraper Ad size */
+    height: 600px;
     background: #1a1a1a;
     border: 1px dashed #444;
     color: #555;
@@ -55,10 +48,9 @@ body {
     text-align: center;
 }
 
-/* 2. CENTER STAGE (Fixed width to keep videos looking good) */
+/* 2. CENTER STAGE */
 .center-stage {
     width: 900px; 
-    /* Important: prevents it from shrinking if window gets small */
     flex-shrink: 0; 
     display: flex;
     background: #000;
@@ -68,7 +60,7 @@ body {
 
 /* Video Column */
 .video-column {
-    flex: 1.5; /* Takes 60% of the center stage width */
+    flex: 1.5; 
     display: flex;
     flex-direction: column;
     padding: 15px;
@@ -80,20 +72,20 @@ body {
 
 .video-wrapper {
     width: 100%;
-    /* FORCE WEBCAM SHAPE (4:3) so it's not wide/short */
     aspect-ratio: 4/3; 
     background: #111;
     position: relative;
     border-radius: 8px;
     overflow: hidden;
     border: 1px solid #333;
-    max-height: 45vh; /* Ensure it fits vertically */
+    max-height: 45vh; 
 }
 
 video {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    /* REMOVED transform: scaleX(-1) to fix inverted camera */
 }
 
 .label {
@@ -105,26 +97,18 @@ video {
     border-radius: 4px;
     font-size: 0.75rem;
     z-index: 5;
-    text-shadow: 1px 1px 2px black;
 }
 
 .loading-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #111;
-    color: #888;
-    z-index: 4;
+    top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; justify-content: center; align-items: center;
+    background: #111; color: #888; z-index: 4;
 }
 
 /* Chat Column (Desktop) */
 .chat-column {
-    flex: 1; /* Takes 40% of the center stage width */
+    flex: 1; 
     display: flex;
     flex-direction: column;
     background: #161616;
@@ -156,238 +140,102 @@ video {
 }
 
 input {
-    flex: 1;
-    padding: 10px;
-    border-radius: 4px;
-    border: none;
-    outline: none;
-    background: #333;
-    color: white;
+    flex: 1; padding: 10px; border-radius: 4px; border: none; outline: none; background: #333; color: white;
 }
 
 #send-btn {
-    padding: 10px 15px;
-    background: #e94560;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
+    padding: 10px 15px; background: #e94560; color: white; border: none; border-radius: 4px; cursor: pointer;
 }
 
 /* Messages */
-.message {
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    max-width: 90%;
-    word-wrap: break-word;
-}
-
-.my-msg {
-    background: #e94560;
-    align-self: flex-end;
-    color: white;
-}
-
-.stranger-msg {
-    background: #333;
-    align-self: flex-start;
-    color: #eee;
-}
-
-.system-msg {
-    color: #666;
-    font-size: 0.8rem;
-    text-align: center;
-    margin: 5px 0;
-    width: 100%;
-}
+.message { padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; max-width: 90%; word-wrap: break-word; }
+.my-msg { background: #e94560; align-self: flex-end; color: white; }
+.stranger-msg { background: #333; align-self: flex-start; color: #eee; }
+.system-msg { color: #666; font-size: 0.8rem; text-align: center; margin: 5px 0; width: 100%; }
 
 /* --- BUTTONS --- */
 .controls-overlay {
     position: absolute;
-    bottom: 15px;
-    left: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    z-index: 10;
+    bottom: 15px; left: 0; width: 100%;
+    display: flex; justify-content: center; gap: 10px; z-index: 10;
 }
 
-button {
-    cursor: pointer;
-    border: none;
-    font-weight: bold;
-    font-size: 0.9rem;
-}
+button { cursor: pointer; border: none; font-weight: bold; font-size: 0.9rem; }
 
 #next-btn {
-    padding: 10px 25px;
-    border-radius: 20px;
-    background: white;
-    color: black;
+    padding: 10px 25px; border-radius: 20px; background: white; color: black;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-    transition: transform 0.1s;
-}
-
-#next-btn:active {
-    transform: scale(0.95);
 }
 
 #mobile-chat-btn {
-    display: none; /* Hidden on desktop */
-    padding: 10px 20px;
-    border-radius: 20px;
-    background: #e94560;
-    color: white;
+    display: none; padding: 10px 20px; border-radius: 20px; background: #e94560; color: white;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 /* --- MOBILE SPECIFIC STYLES --- */
-.mobile-ad-footer {
-    display: none;
-}
+.mobile-ad-footer { display: none; }
+.mobile-chat-overlay { display: none; }
 
-.mobile-chat-overlay {
-    display: none;
-}
-
-@media (max-width: 768px) {
-    /* Hide Desktop Sidebars & Chat Column */
-    .side-spacer,
-    .desktop-chat {
-        display: none;
-    }
-
-    /* Center Stage takes full width */
-    .center-stage {
-        width: 100%;
-    }
-
-    /* Layout: Top Video (Stranger), Bottom Video (User), Footer Ad */
+/* Portrait Mobile (Standard Phone View) */
+@media (max-width: 768px) and (orientation: portrait) {
+    .side-spacer, .desktop-chat { display: none; }
+    .center-stage { width: 100%; }
+    
+    /* Layout: Top Video, Bottom Video, Footer Ad */
     .app-layout {
-        height: calc(100vh - 60px); /* Leave exactly 60px space for Ad */
-        display: flex;
-        flex-direction: column;
+        /* CRITICAL: Leaves exactly 60px at bottom for ad */
+        height: calc(100vh - 60px); 
+        display: flex; flex-direction: column;
     }
 
     .video-column {
-        padding: 0;
-        gap: 2px;
-        height: 100%;
-        width: 100%;
-        justify-content: flex-start;
+        padding: 0; gap: 2px; height: 100%; width: 100%; justify-content: flex-start;
     }
 
     .video-wrapper {
-        border-radius: 0;
-        border: none;
-        aspect-ratio: auto; /* Let it fill flex space on mobile */
-        flex: 1; /* Both videos take exactly 50% of the available height */
-        max-height: none;
+        border-radius: 0; border: none; aspect-ratio: auto; flex: 1; max-height: none;
     }
 
-    /* Show Mobile Chat Button */
-    #mobile-chat-btn {
-        display: block;
-    }
-
-    /* Controls positioned slightly higher to avoid accidental clicks near bottom */
-    .controls-overlay {
-        bottom: 20px;
-    }
+    #mobile-chat-btn { display: block; }
+    .controls-overlay { bottom: 20px; }
 
     /* Mobile Chat Overlay */
     .mobile-chat-overlay {
-        display: none; /* Toggled by JS */
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 65%; /* Takes 65% of the width */
-        height: 100%;
-        background: rgba(0, 0, 0, 0.9);
-        z-index: 20;
-        flex-direction: column;
-        border-left: 1px solid #444;
+        display: none; position: absolute; top: 0; right: 0; width: 65%; height: 100%;
+        background: rgba(0, 0, 0, 0.9); z-index: 20; flex-direction: column; border-left: 1px solid #444;
     }
+    .mobile-chat-header { padding: 10px; background: #222; display: flex; justify-content: space-between; align-items: center; }
+    #close-mobile-chat { background: none; color: white; font-size: 1.5rem; padding: 0 10px; }
+    .mobile-messages { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 5px; }
+    .mobile-input-area { padding: 10px; background: #222; border-top: 1px solid #333; display: flex; }
+    #mobile-input { flex: 1; padding: 8px; border-radius: 4px; border: none; background: #333; color: white; }
+    #mobile-send { margin-left: 8px; padding: 0 12px; background: #e94560; color: white; border-radius: 4px; }
 
-    .mobile-chat-header {
-        padding: 10px;
-        background: #222;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #333;
-    }
-
-    #close-mobile-chat {
-        background: none;
-        color: white;
-        font-size: 1.5rem;
-        padding: 0 10px;
-    }
-
-    .mobile-messages {
-        flex: 1;
-        overflow-y: auto;
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-    .mobile-input-area {
-        padding: 10px;
-        background: #222;
-        border-top: 1px solid #333;
-        display: flex;
-    }
-
-    #mobile-input {
-        flex: 1;
-        padding: 8px;
-        border-radius: 4px;
-        border: none;
-        background: #333;
-        color: white;
-    }
-
-    #mobile-send {
-        margin-left: 8px;
-        padding: 0 12px;
-        background: #e94560;
-        color: white;
-        border-radius: 4px;
-        font-size: 1.2rem;
-        line-height: 1;
-    }
-
-    /* FIXED FOOTER AD (Outside main layout) */
+    /* FIXED FOOTER AD */
     .mobile-ad-footer {
-        display: flex;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 60px;
-        background: #1a1a1a;
-        border-top: 1px solid #333;
-        justify-content: center;
-        align-items: center;
-        z-index: 999;
+        display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 60px;
+        background: #1a1a1a; border-top: 1px solid #333; justify-content: center; align-items: center; z-index: 999;
     }
-
     .mobile-ad-box {
-        width: 320px;
-        height: 50px;
-        background: #333;
-        color: #666;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border: 1px dashed #555;
-        font-size: 0.8rem;
+        width: 320px; height: 50px; background: #333; color: #666; display: flex; justify-content: center; align-items: center; border: 1px dashed #555; font-size: 0.8rem;
     }
+}
+
+/* Landscape Mobile (Uses Desktop-like layout) */
+@media (max-width: 932px) and (orientation: landscape) {
+    /* Hide Side spacers but show chat */
+    .side-spacer { display: none; }
+    .center-stage { width: 100%; }
+    
+    .app-layout { height: 100%; }
+    
+    .video-column { flex: 1.5; padding: 5px; gap: 5px; }
+    .chat-column { display: flex; flex: 1; }
+    
+    .video-wrapper { aspect-ratio: 16/9; max-height: none; }
+    
+    /* Hide mobile specific elements in landscape */
+    .mobile-ad-footer { display: none; }
+    #mobile-chat-btn { display: none; }
+    .mobile-chat-overlay { display: none; }
 }

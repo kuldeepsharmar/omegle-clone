@@ -25,61 +25,76 @@ let localStream;
 let peerConnection;
 let partnerId = null;
 
+// Public STUN servers
 const servers = {
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
 
-// 1. Initialize
+// 1. Initialize Camera
 async function init() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localVideo.srcObject = localStream;
     } catch (err) {
-        console.error(err);
-        alert("Please allow camera access to use this app.");
+        console.error("Camera Error:", err);
+        alert("Camera access denied. Please allow permissions and refresh.");
+        statusText.innerText = "Camera access denied.";
     }
 }
 init();
 
 // 2. Button Listeners
 nextBtn.addEventListener('click', () => {
+    // Check if socket is connected
+    if (!socket.connected) {
+        alert("Connecting to server... Please wait.");
+        return;
+    }
+
     const action = nextBtn.innerText;
-    if (action === "Start Chat" || action === "Find New Stranger") {
+    if (action === "Start" || action === "Find New Stranger") {
         startSearch();
     } else if (action === "Skip") {
-        resetConnection();
-        startSearch();
+        skipPartner();
     } else if (action === "Stop") {
         stopSearch();
     }
 });
 
 // Mobile Chat Toggles
-mobileChatBtn.addEventListener('click', () => {
-    mobileChatOverlay.style.display = 'flex';
-});
-closeMobileChat.addEventListener('click', () => {
-    mobileChatOverlay.style.display = 'none';
-});
+if (mobileChatBtn) {
+    mobileChatBtn.addEventListener('click', () => {
+        mobileChatOverlay.style.display = 'flex';
+    });
+}
+if (closeMobileChat) {
+    closeMobileChat.addEventListener('click', () => {
+        mobileChatOverlay.style.display = 'none';
+    });
+}
 
 // 3. Search Logic
 function startSearch() {
+    console.log("Starting search...");
     nextBtn.innerText = "Stop";
     statusText.innerText = "Searching...";
     loadingOverlay.innerText = "Looking for someone...";
     loadingOverlay.style.display = "flex";
     
-    // Hide chat while searching
     toggleChatUI(false);
-    
     socket.emit('find-partner');
 }
 
 function stopSearch() {
     socket.emit('stop-search');
-    nextBtn.innerText = "Start Chat";
+    nextBtn.innerText = "Start";
     statusText.innerText = "Stopped";
     loadingOverlay.innerText = "Click Start";
+}
+
+function skipPartner() {
+    resetConnection();
+    startSearch();
 }
 
 function resetConnection() {
@@ -96,53 +111,49 @@ function resetConnection() {
     addSystemMessage("You disconnected.");
 }
 
-// 4. Chat Logic (Syncs Desktop and Mobile)
+// 4. Chat Logic
 function toggleChatUI(enable) {
-    // Desktop
     desktopInput.disabled = !enable;
     desktopSendBtn.disabled = !enable;
     
-    // Mobile
     if (enable) {
-        mobileChatBtn.style.display = "block"; // Show chat button
+        if(mobileChatBtn) mobileChatBtn.style.display = "block";
     } else {
-        mobileChatBtn.style.display = "none"; // Hide button
-        mobileChatOverlay.style.display = "none"; // Close overlay
+        if(mobileChatBtn) mobileChatBtn.style.display = "none";
+        if(mobileChatOverlay) mobileChatOverlay.style.display = "none";
     }
 }
 
-// Sending Messages
 function sendMessage(text) {
     if (text && partnerId) {
         addMessage(text, 'my-msg');
         socket.emit('send-message', text);
         desktopInput.value = '';
-        mobileInput.value = '';
+        if(mobileInput) mobileInput.value = '';
     }
 }
 
-// Desktop Inputs
 desktopSendBtn.addEventListener('click', () => sendMessage(desktopInput.value.trim()));
 desktopInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(desktopInput.value.trim()); });
 
-// Mobile Inputs
-mobileSendBtn.addEventListener('click', () => sendMessage(mobileInput.value.trim()));
-mobileInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(mobileInput.value.trim()); });
+if (mobileSendBtn) {
+    mobileSendBtn.addEventListener('click', () => sendMessage(mobileInput.value.trim()));
+    mobileInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(mobileInput.value.trim()); });
+}
 
-// Receive Message
 socket.on('receive-message', (msg) => {
     addMessage(msg, 'stranger-msg');
 });
 
 function addMessage(text, type) {
-    // Add to Desktop
+    // Desktop
     const dDiv = document.createElement('div');
     dDiv.classList.add('message', type);
     dDiv.innerText = text;
     desktopChatBox.appendChild(dDiv);
     desktopChatBox.scrollTop = desktopChatBox.scrollHeight;
 
-    // Add to Mobile
+    // Mobile
     const mDiv = document.createElement('div');
     mDiv.classList.add('message', type);
     mDiv.innerText = text;
@@ -151,7 +162,6 @@ function addMessage(text, type) {
 }
 
 function addSystemMessage(text) {
-    // Clear chat on new connection
     if (text.includes("Say Hi")) {
         desktopChatBox.innerHTML = '';
         mobileMessagesArea.innerHTML = '';
@@ -163,14 +173,20 @@ function addSystemMessage(text) {
 }
 
 // 5. Socket Events
+socket.on('connect', () => {
+    console.log("Connected to server");
+    statusText.innerText = "Click Start";
+});
+
 socket.on('match-found', (id) => {
+    console.log("Match found:", id);
     partnerId = id;
     statusText.innerText = "Connected!";
     nextBtn.innerText = "Skip";
     loadingOverlay.style.display = "none";
     
     addSystemMessage("You are now chatting with a random stranger. Say Hi!");
-    toggleChatUI(true); // Enable chat
+    toggleChatUI(true);
     createPeerConnection();
 });
 
@@ -179,10 +195,10 @@ socket.on('partner-disconnected', () => {
     loadingOverlay.style.display = "flex";
     loadingOverlay.innerText = "Stranger disconnected";
     resetConnection();
-    nextBtn.innerText = "Find New Stranger";
+    nextBtn.innerText = "Find New Stranger"; // Updates button text
 });
 
-// 6. WebRTC (Standard)
+// 6. WebRTC
 socket.on('role', async (role) => {
     if (role === 'caller') {
         const offer = await peerConnection.createOffer();
