@@ -1,19 +1,20 @@
 const socket = io();
 const localVideo = document.getElementById('local-video');
 const remoteVideo = document.getElementById('remote-video');
-const findBtn = document.getElementById('find-btn');
+const nextBtn = document.getElementById('next-btn');
 const statusText = document.getElementById('status-text');
 
 let localStream;
 let peerConnection;
 let partnerId = null;
+let isSearching = false;
 
-// Free Google STUN servers (needed to connect different networks)
+// STUN servers
 const servers = {
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
 
-// 1. Get User Media (Camera/Mic)
+// 1. Initialize Camera
 async function init() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -25,18 +26,55 @@ async function init() {
 }
 init();
 
-findBtn.addEventListener('click', () => {
-    findBtn.disabled = true;
-    findBtn.innerText = "Searching...";
-    statusText.innerText = "Looking for someone...";
-    socket.emit('find-partner');
+// 2. Button Logic (Start / Skip / Stop)
+nextBtn.addEventListener('click', () => {
+    if (nextBtn.innerText === "Start Chat" || nextBtn.innerText === "Find New Stranger") {
+        startSearch();
+    } else if (nextBtn.innerText === "Skip") {
+        // Close current connection and search again immediately
+        resetConnection();
+        startSearch();
+    } else if (nextBtn.innerText === "Stop") {
+        // Stop searching
+        stopSearch();
+    }
 });
 
-// 2. Handle Socket Events
+function startSearch() {
+    isSearching = true;
+    nextBtn.innerText = "Stop"; // Allow user to cancel search
+    statusText.innerText = "Looking for someone...";
+    socket.emit('find-partner');
+}
+
+function stopSearch() {
+    isSearching = false;
+    socket.emit('stop-search'); // Tell server to remove us from queue
+    nextBtn.innerText = "Start Chat";
+    statusText.innerText = "Search stopped.";
+}
+
+function resetConnection() {
+    if (peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+    partnerId = null;
+    remoteVideo.srcObject = null; // Black out the screen
+}
+
+// 3. Socket Events
 socket.on('match-found', (id) => {
     partnerId = id;
-    statusText.innerText = "Partner found! Connecting...";
+    statusText.innerText = "Stranger found!";
+    nextBtn.innerText = "Skip"; // Change button to Skip
     createPeerConnection();
+});
+
+socket.on('partner-disconnected', () => {
+    statusText.innerText = "Stranger disconnected.";
+    resetConnection();
+    nextBtn.innerText = "Find New Stranger"; // Prompt to search again
 });
 
 socket.on('role', async (role) => {
@@ -49,10 +87,10 @@ socket.on('role', async (role) => {
 
 socket.on('signal', async (data) => {
     const signal = data.signal;
-
-    if (!peerConnection) createPeerConnection();
+    if (!peerConnection) return; // Ignore signals if we reset
 
     if (signal.type === 'offer') {
+        if (!peerConnection) createPeerConnection();
         await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp));
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
@@ -66,19 +104,30 @@ socket.on('signal', async (data) => {
     }
 });
 
-// 3. Helper: Create WebRTC Connection
+// 4. WebRTC Helper
 function createPeerConnection() {
+    if (peerConnection) return; // Prevent duplicates
+
     peerConnection = new RTCPeerConnection(servers);
 
-    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+    if (localStream) {
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+    }
 
     peerConnection.ontrack = (event) => {
         remoteVideo.srcObject = event.streams[0];
     };
 
     peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
+        if (event.candidate && partnerId) {
             socket.emit('signal', { target: partnerId, signal: { candidate: event.candidate } });
+        }
+    };
+    
+    // Handle connection state changes
+    peerConnection.onconnectionstatechange = () => {
+        if (peerConnection.connectionState === 'disconnected') {
+            resetConnection();
         }
     };
 }
