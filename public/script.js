@@ -1,14 +1,25 @@
 const socket = io();
+
+// Video Elements
 const localVideo = document.getElementById('local-video');
 const remoteVideo = document.getElementById('remote-video');
-const nextBtn = document.getElementById('next-btn');
-const statusText = document.getElementById('status-text');
 const loadingOverlay = document.getElementById('loading-overlay');
 
-// Chat Elements
-const chatBox = document.getElementById('chat-box');
-const msgInput = document.getElementById('msg-input');
-const sendBtn = document.getElementById('send-btn');
+// Control Elements
+const nextBtn = document.getElementById('next-btn');
+const mobileChatBtn = document.getElementById('mobile-chat-btn');
+const statusText = document.getElementById('status-text');
+
+// Chat Elements (Desktop & Mobile)
+const desktopChatBox = document.getElementById('desktop-chat-box');
+const desktopInput = document.getElementById('msg-input');
+const desktopSendBtn = document.getElementById('send-btn');
+
+const mobileChatOverlay = document.getElementById('mobile-chat-box');
+const mobileMessagesArea = document.getElementById('mobile-messages-area');
+const mobileInput = document.getElementById('mobile-input');
+const mobileSendBtn = document.getElementById('mobile-send');
+const closeMobileChat = document.getElementById('close-mobile-chat');
 
 let localStream;
 let peerConnection;
@@ -18,22 +29,21 @@ const servers = {
     iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 };
 
-// 1. Camera Init
+// 1. Initialize
 async function init() {
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         localVideo.srcObject = localStream;
     } catch (err) {
         console.error(err);
-        statusText.innerText = "Allow camera to start";
+        alert("Please allow camera access to use this app.");
     }
 }
 init();
 
-// 2. Buttons
+// 2. Button Listeners
 nextBtn.addEventListener('click', () => {
     const action = nextBtn.innerText;
-    
     if (action === "Start Chat" || action === "Find New Stranger") {
         startSearch();
     } else if (action === "Skip") {
@@ -44,11 +54,24 @@ nextBtn.addEventListener('click', () => {
     }
 });
 
+// Mobile Chat Toggles
+mobileChatBtn.addEventListener('click', () => {
+    mobileChatOverlay.style.display = 'flex';
+});
+closeMobileChat.addEventListener('click', () => {
+    mobileChatOverlay.style.display = 'none';
+});
+
+// 3. Search Logic
 function startSearch() {
     nextBtn.innerText = "Stop";
     statusText.innerText = "Searching...";
     loadingOverlay.innerText = "Looking for someone...";
     loadingOverlay.style.display = "flex";
+    
+    // Hide chat while searching
+    toggleChatUI(false);
+    
     socket.emit('find-partner');
 }
 
@@ -69,23 +92,85 @@ function resetConnection() {
     loadingOverlay.style.display = "flex";
     loadingOverlay.innerText = "Disconnected";
     
-    // Disable Chat
-    toggleChat(false);
+    toggleChatUI(false);
     addSystemMessage("You disconnected.");
 }
 
-// 3. Socket Events
+// 4. Chat Logic (Syncs Desktop and Mobile)
+function toggleChatUI(enable) {
+    // Desktop
+    desktopInput.disabled = !enable;
+    desktopSendBtn.disabled = !enable;
+    
+    // Mobile
+    if (enable) {
+        mobileChatBtn.style.display = "block"; // Show chat button
+    } else {
+        mobileChatBtn.style.display = "none"; // Hide button
+        mobileChatOverlay.style.display = "none"; // Close overlay
+    }
+}
+
+// Sending Messages
+function sendMessage(text) {
+    if (text && partnerId) {
+        addMessage(text, 'my-msg');
+        socket.emit('send-message', text);
+        desktopInput.value = '';
+        mobileInput.value = '';
+    }
+}
+
+// Desktop Inputs
+desktopSendBtn.addEventListener('click', () => sendMessage(desktopInput.value.trim()));
+desktopInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(desktopInput.value.trim()); });
+
+// Mobile Inputs
+mobileSendBtn.addEventListener('click', () => sendMessage(mobileInput.value.trim()));
+mobileInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(mobileInput.value.trim()); });
+
+// Receive Message
+socket.on('receive-message', (msg) => {
+    addMessage(msg, 'stranger-msg');
+});
+
+function addMessage(text, type) {
+    // Add to Desktop
+    const dDiv = document.createElement('div');
+    dDiv.classList.add('message', type);
+    dDiv.innerText = text;
+    desktopChatBox.appendChild(dDiv);
+    desktopChatBox.scrollTop = desktopChatBox.scrollHeight;
+
+    // Add to Mobile
+    const mDiv = document.createElement('div');
+    mDiv.classList.add('message', type);
+    mDiv.innerText = text;
+    mobileMessagesArea.appendChild(mDiv);
+    mobileMessagesArea.scrollTop = mobileMessagesArea.scrollHeight;
+}
+
+function addSystemMessage(text) {
+    // Clear chat on new connection
+    if (text.includes("Say Hi")) {
+        desktopChatBox.innerHTML = '';
+        mobileMessagesArea.innerHTML = '';
+    }
+    const div = document.createElement('div');
+    div.classList.add('system-msg');
+    div.innerText = text;
+    desktopChatBox.appendChild(div);
+}
+
+// 5. Socket Events
 socket.on('match-found', (id) => {
     partnerId = id;
-    statusText.innerText = "Connected to Stranger";
+    statusText.innerText = "Connected!";
     nextBtn.innerText = "Skip";
     loadingOverlay.style.display = "none";
     
-    // Enable Chat & Clear old messages
-    chatBox.innerHTML = ''; 
     addSystemMessage("You are now chatting with a random stranger. Say Hi!");
-    toggleChat(true);
-
+    toggleChatUI(true); // Enable chat
     createPeerConnection();
 });
 
@@ -97,53 +182,7 @@ socket.on('partner-disconnected', () => {
     nextBtn.innerText = "Find New Stranger";
 });
 
-// --- CHAT LOGIC ---
-
-function toggleChat(enable) {
-    msgInput.disabled = !enable;
-    sendBtn.disabled = !enable;
-    if (enable) msgInput.focus();
-}
-
-// Send Message
-sendBtn.addEventListener('click', sendMessage);
-msgInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendMessage();
-});
-
-function sendMessage() {
-    const text = msgInput.value.trim();
-    if (text && partnerId) {
-        // Show my message
-        addMessage(text, 'my-msg');
-        // Send to server
-        socket.emit('send-message', text);
-        msgInput.value = '';
-    }
-}
-
-// Receive Message
-socket.on('receive-message', (msg) => {
-    addMessage(msg, 'stranger-msg');
-});
-
-function addMessage(text, type) {
-    const div = document.createElement('div');
-    div.classList.add('message', type);
-    div.innerText = text;
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight; // Auto scroll down
-}
-
-function addSystemMessage(text) {
-    const div = document.createElement('div');
-    div.classList.add('system-msg');
-    div.innerText = text;
-    chatBox.appendChild(div);
-}
-
-// --- WEBRTC LOGIC ---
-
+// 6. WebRTC (Standard)
 socket.on('role', async (role) => {
     if (role === 'caller') {
         const offer = await peerConnection.createOffer();
