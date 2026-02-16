@@ -9,64 +9,74 @@
 </head>
 <body>
 
-    <div class="main-wrapper">
+    <div class="app-layout">
         
-        <div class="video-column">
-            <div class="video-container remote-container">
-                <video id="remote-video" autoplay playsinline></video>
-                <span class="label">Stranger</span>
-                <div class="loading-overlay" id="loading-overlay">Waiting for connection...</div>
-            </div>
-
-            <div class="video-container local-container">
-                <video id="local-video" autoplay playsinline muted></video>
-                <span class="label">You</span>
-
-                <div class="controls-overlay">
-                    <button id="next-btn">Start Chat</button>
-                    <button id="mobile-chat-btn" style="display: none;">💬 Chat</button>
+        <div class="ad-sidebar left-ad">
+            <div class="ad-box">
+                <p>Ad Space Left</p>
                 </div>
-
-                <div class="mobile-chat-overlay" id="mobile-chat-box">
-                    <div class="mobile-chat-header">
-                        <span>Chat</span>
-                        <button id="close-mobile-chat">×</button>
-                    </div>
-                    <div class="mobile-messages" id="mobile-messages-area"></div>
-                    <div class="mobile-input-area">
-                        <input type="text" id="mobile-input" placeholder="Type...">
-                        <button id="mobile-send">></button>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <div class="chat-column desktop-chat">
-            <header>
-                <h2>NextChat</h2>
-                <div id="status-text">Click Start to connect</div>
-            </header>
+        <div class="center-stage">
             
-            <div class="chat-box" id="desktop-chat-box">
-                <div class="system-msg">Welcome!</div>
+            <div class="video-column">
+                <div class="video-wrapper remote-wrapper">
+                    <video id="remote-video" autoplay playsinline></video>
+                    <span class="label">Stranger</span>
+                    <div class="loading-overlay" id="loading-overlay">Waiting...</div>
+                </div>
+
+                <div class="video-wrapper local-wrapper">
+                    <video id="local-video" autoplay playsinline muted></video>
+                    <span class="label">You</span>
+
+                    <div class="controls-overlay">
+                        <button id="next-btn">Start</button>
+                        <button id="mobile-chat-btn">💬 Chat</button>
+                    </div>
+
+                    <div class="mobile-chat-overlay" id="mobile-chat-box">
+                        <div class="mobile-chat-header">
+                            <span>Chat</span>
+                            <button id="close-mobile-chat">×</button>
+                        </div>
+                        <div class="mobile-messages" id="mobile-messages-area"></div>
+                        <div class="mobile-input-area">
+                            <input type="text" id="mobile-input" placeholder="Type...">
+                            <button id="mobile-send">></button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="chat-input-area">
-                <input type="text" id="msg-input" placeholder="Type a message..." disabled>
-                <button id="send-btn" disabled>Send</button>
+
+            <div class="chat-column desktop-chat">
+                <header>
+                    <h2>NextChat</h2>
+                    <div id="status-text">Click Start</div>
+                </header>
+                <div class="chat-box" id="desktop-chat-box">
+                    <div class="system-msg">Welcome!</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="msg-input" placeholder="Type..." disabled>
+                    <button id="send-btn" disabled>Send</button>
+                </div>
             </div>
+
         </div>
 
-        <div class="ad-column">
-            <div class="ad-placeholder">
-                <p>Google Ad Space</p>
+        <div class="ad-sidebar right-ad">
+            <div class="ad-box">
+                <p>Ad Space Right</p>
                 </div>
         </div>
 
     </div>
 
     <div class="mobile-ad-footer">
-        <p>Mobile Banner Ad</p>
+        <div class="mobile-ad-box">
+            <p>Mobile Banner Ad (320x50)</p>
+        </div>
     </div>
 
     <script src="script.js"></script>
