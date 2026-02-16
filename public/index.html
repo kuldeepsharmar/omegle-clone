@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NextChat - Premium Video</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>NextChat</h1>
+            <div class="status" id="status-text">Ready to connect...</div>
+        </header>
+        
+        <div class="video-grid">
+            <div class="video-wrapper local">
+                <video id="local-video" autoplay playsinline muted></video>
+                <span class="label">You</span>
+            </div>
+            <div class="video-wrapper remote">
+                <video id="remote-video" autoplay playsinline></video>
+                <span class="label">Stranger</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="find-btn">Find Stranger</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
